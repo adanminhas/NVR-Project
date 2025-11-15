@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import cameras
 
 app = FastAPI(title="Pi NVR Backend")
 
@@ -12,13 +13,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include routers
+app.include_router(cameras.router)
+
 @app.get("/")
 def root():
     return {"message": "Pi NVR Backend Running!"}
-
-@app.get("/api/cameras")
-def get_cameras():
-    return [
-        {"id": 1, "name": "Front Door", "status": "online"},
-        {"id": 2, "name": "Garage", "status": "offline"},
-    ]

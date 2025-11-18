@@ -15,9 +15,9 @@ class Camera(Base):
     __tablename__ = "cameras"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(50), nullable=False)
-    ip_address = Column(String(100), nullable=False)
-    location = Column(String(100))
+    name = Column(String(100), nullable=False)
+    rtsp_url = Column(String(255), nullable=False)
+    status = Column(String(50))
 
 
 # --- Create tables ---

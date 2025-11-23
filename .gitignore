@@ -15,3 +15,8 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# HLS output
+backend/streams/
+*.ts
+*.m3u8

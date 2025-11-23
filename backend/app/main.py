@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from app.config import STREAMS_DIR
 from app.routers import cameras, streams
 
 app = FastAPI(title="Pi NVR Backend")
@@ -12,6 +14,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount HLS static files
+app.mount("/streams", StaticFiles(directory=STREAMS_DIR), name="streams")
 
 # Include routers
 app.include_router(cameras.router)

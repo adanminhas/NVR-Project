@@ -20,3 +20,6 @@ Thumbs.db
 backend/streams/
 *.ts
 *.m3u8
+
+# Dev-only test HTML
+hls_test.html

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import cameras
+from app.routers import cameras, streams
 
 app = FastAPI(title="Pi NVR Backend")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(cameras.router)
+app.include_router(streams.router)
 
 @app.get("/")
 def root():

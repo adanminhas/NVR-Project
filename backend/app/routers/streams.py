@@ -79,3 +79,14 @@ def stop_camera_stream(camera_id: int, db: Session = Depends(get_db)):
         "camera_id": camera.id,
         "status": camera.status,
     }
+
+@router.get("/{camera_id}/health")
+def stream_health(camera_id: int):
+    running = stream_service.is_stream_running(camera_id)
+    active = stream_service.is_hls_active(camera_id)
+
+    return {
+        "camera_id": camera_id,
+        "ffmpeg_running": running,
+        "hls_active": active,
+    }

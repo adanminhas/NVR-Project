@@ -19,11 +19,18 @@ def get_stream_dir(camera_id: int) -> Path:
 
 
 def is_stream_running(camera_id: int) -> bool:
-    """
-    Check if we already have a running ffmpeg process for this camera.
-    """
     proc = _processes.get(camera_id)
-    return bool(proc and proc.poll() is None)
+    if not proc:
+        return False
+
+    # poll() returns None if still running
+    if proc.poll() is None:
+        return True
+
+    # Process died — clean up
+    _processes.pop(camera_id, None)
+    return False
+
 
 
 def start_stream(camera_id: int, rtsp_url: str) -> Path:
@@ -32,9 +39,15 @@ def start_stream(camera_id: int, rtsp_url: str) -> Path:
 
     Returns the path to the HLS playlist (index.m3u8).
     """
-    # If already running, just return existing playlist path
+    # If process exists but died, restart it
+    if camera_id in _processes:
+        proc = _processes[camera_id]
+        if proc.poll() is not None:
+            _processes.pop(camera_id, None)
+
     if is_stream_running(camera_id):
         return get_stream_dir(camera_id) / "index.m3u8"
+
 
     out_dir = get_stream_dir(camera_id)
     playlist_path = out_dir / "index.m3u8"
@@ -74,3 +87,12 @@ def stop_stream(camera_id: int) -> bool:
             proc.kill()
         return True
     return False
+
+def is_hls_active(camera_id: int) -> bool:
+    stream_dir = get_stream_dir(camera_id)
+    if not stream_dir.exists():
+        return False
+
+    ts_files = list(stream_dir.glob("*.ts"))
+    return len(ts_files) > 0
+

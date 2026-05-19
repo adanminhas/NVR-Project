@@ -1,15 +1,26 @@
 <template>
-  <div class="page">
-    <h2>Live View — Camera {{ cameraId }}</h2>
+  <section class="page">
+    <header class="live-header">
+      <button class="btn-ghost" @click="$router.push('/cameras')">
+        ← Back
+      </button>
+      <div class="live-title">
+        <h2>Live View</h2>
+        <p class="subtitle">Camera #{{ cameraId }}</p>
+      </div>
+      <span class="badge" :class="healthBadgeClass">{{ healthLabel }}</span>
+    </header>
 
-    <div class="video-wrapper">
-      <video ref="videoPlayer" controls autoplay muted playsinline></video>
+    <div class="video-wrapper card">
+      <video
+        ref="videoPlayer"
+        controls
+        autoplay
+        muted
+        playsinline
+      ></video>
     </div>
-
-    <button class="back-btn" @click="$router.push('/cameras')">
-      ← Back to Cameras
-    </button>
-  </div>
+  </section>
 </template>
 
 <script>
@@ -22,7 +33,30 @@ export default {
     return {
       cameraId: this.id,
       hls: null,
+      healthInterval: null,
+      health: null,
     };
+  },
+
+  computed: {
+    healthLabel() {
+      if (!this.health) return "connecting";
+      if (this.health.ffmpeg_running && this.health.hls_active) return "live";
+      if (this.health.ffmpeg_running) return "starting";
+      return "offline";
+    },
+    healthBadgeClass() {
+      switch (this.healthLabel) {
+        case "live":
+          return "success";
+        case "starting":
+          return "warning";
+        case "offline":
+          return "danger";
+        default:
+          return "muted";
+      }
+    },
   },
 
   mounted() {
@@ -35,7 +69,6 @@ export default {
     clearInterval(this.healthInterval);
   },
 
-
   methods: {
     startStream() {
       const video = this.$refs.videoPlayer;
@@ -47,10 +80,8 @@ export default {
           liveSyncDuration: 2,
           maxBufferSize: 10 * 1000 * 1000,
         });
-
         this.hls.loadSource(streamUrl);
         this.hls.attachMedia(video);
-
         this.hls.on(Hls.Events.ERROR, (_, data) => {
           console.warn("HLS error:", data);
         });
@@ -64,13 +95,13 @@ export default {
           `http://localhost:8000/api/streams/${this.cameraId}/health`
         );
         const data = await res.json();
-
+        this.health = data;
         if (!data.ffmpeg_running || !data.hls_active) {
-          console.warn("Stream unhealthy, reloading HLS");
           this.reloadPlayer();
         }
       } catch (err) {
         console.error("Health check failed", err);
+        this.health = { ffmpeg_running: false, hls_active: false };
       }
     },
     reloadPlayer() {
@@ -80,36 +111,39 @@ export default {
       }
       this.startStream();
     },
-
   },
 };
 </script>
 
-<style>
-.page {
-  padding: 20px;
-  color: white;
+<style scoped>
+.live-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.live-title h2 {
+  margin: 0 0 0.1rem;
+}
+.subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+.live-header > .badge {
+  margin-left: auto;
 }
 .video-wrapper {
-  width: 100%;
-  max-width: 900px;
-  margin: auto;
-  background: black;
-  border-radius: 10px;
+  padding: 0;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 16 / 9;
 }
 video {
   width: 100%;
-}
-.back-btn {
-  margin-top: 20px;
-  padding: 10px 16px;
-  border: none;
-  background: #42b883;
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.back-btn:hover {
-  background: #369d6f;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: #000;
 }
 </style>

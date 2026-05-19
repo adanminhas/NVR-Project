@@ -1,36 +1,58 @@
 <template>
   <nav class="navbar">
-    <h1 class="title">Pi NVR Dashboard</h1>
-    <ul class="menu">
-      <li><router-link to="/">Cameras</router-link></li>
-    </ul>
+    <div class="navbar-inner">
+      <router-link to="/" class="brand">Pi NVR</router-link>
+      <ul class="menu">
+        <li>
+          <router-link to="/cameras" active-class="active">Cameras</router-link>
+        </li>
+      </ul>
+    </div>
   </nav>
 </template>
 
-<style>
+<style scoped>
 .navbar {
+  background-color: #0a1020;
+  border-bottom: 1px solid var(--border);
+}
+.navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
-  background: #1a1a1a;
-  color: white;
 }
-.title {
-  font-size: 20px;
-  font-weight: bold;
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.brand:hover {
+  color: var(--text);
 }
 .menu {
   list-style: none;
   display: flex;
-  gap: 20px;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
 }
 .menu a {
-  color: white;
-  text-decoration: none;
-  font-size: 16px;
+  display: inline-block;
+  color: var(--text-muted);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
 }
 .menu a:hover {
-  color: #42b883;
+  color: var(--text);
+  background-color: var(--surface);
+}
+.menu a.active {
+  color: var(--text);
+  background-color: var(--accent-soft);
 }
 </style>

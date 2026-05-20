@@ -1,5 +1,5 @@
 from pathlib import Path
-from subprocess import Popen, DEVNULL, STDOUT
+from subprocess import Popen, STDOUT
 from typing import Dict
 
 from app.settings import settings
@@ -55,7 +55,10 @@ def start_stream(camera_id: int, rtsp_url: str) -> Path:
         str(playlist_path),
     ]
 
-    proc = Popen(cmd, stdout=DEVNULL, stderr=STDOUT)
+    # Capture ffmpeg output to a per-camera log so failures are diagnosable.
+    log_path = out_dir / "ffmpeg.log"
+    log_file = open(log_path, "a", buffering=1)
+    proc = Popen(cmd, stdout=log_file, stderr=STDOUT)
     _processes[camera_id] = proc
 
     return playlist_path

@@ -69,13 +69,15 @@ def stop_camera_stream(camera_id: int, db: Session = Depends(get_db)):
         )
 
     stopped = stream_service.stop_stream(camera.id)
-    if stopped:
-        camera.status = "stopped"
-        db.commit()
-        db.refresh(camera)
+
+    # Stop is idempotent: even if no tracked process existed (e.g. backend
+    # restarted), the camera is functionally stopped now, so reflect that.
+    camera.status = "stopped"
+    db.commit()
+    db.refresh(camera)
 
     return {
-        "message": "Stream stopped" if stopped else "No running stream to stop",
+        "message": "Stream stopped" if stopped else "Stream was not running",
         "camera_id": camera.id,
         "status": camera.status,
     }

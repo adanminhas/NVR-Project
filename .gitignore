@@ -8,6 +8,12 @@ __pycache__/
 venv/
 .env/
 
+# Environment files (keep .env.example tracked)
+.env
+.env.local
+backend/.env
+!.env.example
+
 # IDE / Editor
 .vscode/
 .idea/
@@ -20,6 +26,11 @@ Thumbs.db
 backend/streams/
 *.ts
 *.m3u8
+
+# Local SQLite
+*.db
+*.sqlite
+*.sqlite3
 
 # Dev-only test HTML
 hls_test.html

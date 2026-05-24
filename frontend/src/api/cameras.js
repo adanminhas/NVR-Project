@@ -1,9 +1,21 @@
-import axios from "axios";
+import client from "./client";
 
-const API = "http://localhost:8000/api/cameras";
+const PATH = "/api/cameras/";
 
 export default {
   list() {
-    return axios.get(API);
+    return client.get(PATH);
+  },
+  get(id) {
+    return client.get(`${PATH}${id}`);
+  },
+  create({ name, rtsp_url }) {
+    return client.post(PATH, { name, rtsp_url });
+  },
+  update(id, payload) {
+    return client.put(`${PATH}${id}`, payload);
+  },
+  remove(id) {
+    return client.delete(`${PATH}${id}`);
   },
 };

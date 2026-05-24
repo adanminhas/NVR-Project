@@ -83,13 +83,15 @@ def start_stream(camera_id: int, rtsp_url: str) -> Path:
     cmd = [
         settings.ffmpeg_path,
         "-rtsp_transport", "tcp",
+        "-stream_loop", "-1",       # loop test/file sources forever; no-op for live RTSP
+        "-fflags", "+genpts+discardcorrupt",  # clean timestamps from misbehaving sources
         "-i", rtsp_url,
         "-c:v", "copy",
         "-c:a", "aac",
         "-f", "hls",
         "-hls_time", str(settings.hls_segment_seconds),
         "-hls_list_size", str(settings.hls_list_size),
-        "-hls_flags", "delete_segments",
+        "-hls_flags", "delete_segments+omit_endlist",
         str(playlist_path),
     ]
 

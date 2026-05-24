@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     hls_segment_seconds: int = 2
     hls_list_size: int = 5
 
+    max_concurrent_streams: int = 4
+
     retention_days: int = 7
 
     @property

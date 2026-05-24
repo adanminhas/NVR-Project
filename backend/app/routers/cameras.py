@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.camera_model import Camera
 from app.schemas import CameraCreate, CameraUpdate, CameraOut
+from app.services import stream_service
 
 router = APIRouter(
     prefix="/api/cameras",
@@ -92,6 +93,8 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Camera with id {camera_id} not found",
         )
+
+    stream_service.delete_stream_dir(camera.id)
 
     db.delete(camera)
     db.commit()

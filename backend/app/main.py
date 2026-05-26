@@ -7,8 +7,8 @@ from fastapi.staticfiles import StaticFiles
 from app.database import SessionLocal
 from app.db_migrations import run_migrations
 from app.models.camera_model import Camera
-from app.routers import cameras, recordings, streams
-from app.services import recording_service, stream_service
+from app.routers import auth, cameras, recordings, streams
+from app.services import auth_service, recording_service, stream_service
 from app.settings import settings
 
 
@@ -33,9 +33,18 @@ def _reset_camera_states_on_startup() -> None:
         db.close()
 
 
+def _bootstrap_admin_user() -> None:
+    db = SessionLocal()
+    try:
+        auth_service.ensure_admin_user(db)
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     run_migrations()
+    _bootstrap_admin_user()
     _reset_camera_states_on_startup()
     yield
 
@@ -52,6 +61,7 @@ app.add_middleware(
 
 app.mount("/streams", StaticFiles(directory=settings.streams_dir), name="streams")
 
+app.include_router(auth.router)
 app.include_router(cameras.router)
 app.include_router(streams.router)
 app.include_router(recordings.router)

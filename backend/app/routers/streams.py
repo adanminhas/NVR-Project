@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models.camera_model import Camera
-from app.services import stream_service
+from app.services import auth_service, stream_service
 from app.services.stream_service import StreamLimitExceeded
 
 router = APIRouter(
     prefix="/api/streams",
     tags=["Streams"],
+    dependencies=[Depends(auth_service.get_current_user)],
 )
 
 

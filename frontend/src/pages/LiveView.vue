@@ -134,6 +134,12 @@ export default {
         });
         this.hls.loadSource(streamUrl);
         this.hls.attachMedia(video);
+        this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          // autoplay attribute can race against late media attach — kick it.
+          video.play().catch(() => {
+            /* user gesture required; controls will let them press play */
+          });
+        });
         this.hls.on(Hls.Events.ERROR, (_, data) => {
           if (!data.fatal) return;
           switch (data.type) {

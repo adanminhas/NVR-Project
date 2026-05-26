@@ -11,6 +11,7 @@ from sqlalchemy import inspect, text
 from app.database import Base, engine
 from app.models import camera_model  # noqa: F401 — register tables
 from app.models import recording_model  # noqa: F401 — register tables
+from app.models import user_model  # noqa: F401 — register tables
 
 
 def _column_exists(table: str, column: str) -> bool:

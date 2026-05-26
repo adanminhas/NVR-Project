@@ -5,9 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.database import SessionLocal
+from app.db_migrations import run_migrations
 from app.models.camera_model import Camera
-from app.routers import cameras, streams
-from app.services import stream_service
+from app.routers import cameras, recordings, streams
+from app.services import recording_service, stream_service
 from app.settings import settings
 
 
@@ -15,7 +16,7 @@ def _reset_camera_states_on_startup() -> None:
     """
     After a backend restart we have no live ffmpeg processes, so any camera
     DB status of 'streaming' is stale. Reset to 'offline' and wipe leftover
-    segments from prior sessions.
+    segments from prior sessions. Continuous recordings are re-spawned.
     """
     db = SessionLocal()
     try:
@@ -24,13 +25,17 @@ def _reset_camera_states_on_startup() -> None:
             if camera.status == "streaming":
                 camera.status = "offline"
             stream_service._cleanup_segments(camera.id)
+            if camera.recording_mode == "continuous":
+                recording_service.start_recording(camera.id, camera.rtsp_url)
         db.commit()
+        recording_service.sweep_retention(db)
     finally:
         db.close()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    run_migrations()
     _reset_camera_states_on_startup()
     yield
 
@@ -49,6 +54,7 @@ app.mount("/streams", StaticFiles(directory=settings.streams_dir), name="streams
 
 app.include_router(cameras.router)
 app.include_router(streams.router)
+app.include_router(recordings.router)
 
 
 @app.get("/")

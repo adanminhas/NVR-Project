@@ -28,6 +28,101 @@ This project is designed to be used as part of a DIY home surveillance system.
 - Health check system monitors streams and automatically restarts failed processes
 - Frontend communicates with backend via REST APIs to display live streams
 
+## Setup
+
+### Prerequisites
+
+- Python 3.12 (Python 3.14 has no numpy wheels yet — not strictly required by
+  this project, but worth knowing)
+- Node.js 18+ and npm
+- FFmpeg available on `PATH` (`ffmpeg -version` to verify)
+- **Either** MySQL/MariaDB **or** SQLite (no server needed) for the database
+
+### One-time setup
+
+```bash
+# Clone, then from the project root:
+cd backend
+python3.12 -m venv venv
+./venv/bin/python -m pip install --upgrade pip
+./venv/bin/python -m pip install -r requirements.txt
+
+# Pick a database — see the two options below.
+# Then run migrations:
+../scripts/migrate.sh
+
+# Frontend:
+cd ../frontend
+npm install
+cp .env.example .env  # tweak VITE_API_BASE_URL if needed
+```
+
+### Database option A — MySQL/MariaDB
+
+```sql
+-- as the MySQL root user:
+CREATE DATABASE nvr CHARACTER SET utf8mb4;
+CREATE USER 'nvr'@'localhost' IDENTIFIED BY 'your-strong-password';
+GRANT ALL PRIVILEGES ON nvr.* TO 'nvr'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Then in `backend/.env`:
+
+```
+DATABASE_URL=mysql+pymysql://nvr:your-strong-password@localhost/nvr
+```
+
+### Database option B — SQLite (zero-setup local dev)
+
+Easiest for local hacking. No server, no users, no grants:
+
+```bash
+cp backend/.env.dev backend/.env
+```
+
+That template uses `DATABASE_URL=sqlite:///./nvr.db`. The file lives next to
+the `backend/` directory and is gitignored.
+
+### Run it
+
+Two terminals:
+
+```bash
+# Terminal 1 — backend (also runs Alembic migrations on startup)
+./scripts/dev_backend.sh
+
+# Terminal 2 — frontend
+./scripts/dev_frontend.sh
+```
+
+UI at <http://localhost:5173>. The bootstrap admin user is created from
+`ADMIN_USERNAME` / `ADMIN_PASSWORD` in `backend/.env` on first start.
+
+### Migrations
+
+Migrations live in `backend/alembic/versions/` and run automatically on
+backend startup. For existing databases predating Alembic (e.g. set up via
+this project's earlier hand-rolled migrations), the first start does an
+`alembic stamp head` to adopt the schema as the baseline without touching
+DDL; subsequent starts run `alembic upgrade head` normally.
+
+To add a new migration after changing a SQLAlchemy model:
+
+```bash
+./scripts/new_migration.sh "add some column"
+# review the generated file in backend/alembic/versions/
+./scripts/migrate.sh
+```
+
+Or manually:
+
+```bash
+cd backend
+./venv/bin/alembic revision --autogenerate -m "describe change"
+./venv/bin/alembic upgrade head
+```
+
 ## Motivation
 This project was built to gain hands-on experience with backend systems, video streaming, and full-stack development.  
 An additional motivation was to deploy the system as part of a personal DIY home surveillance setup, allowing direct practical use and real-world testing of reliability, performance, and fault tolerance.
@@ -73,8 +168,8 @@ is done at signaling time. Recording playback (`/api/recordings/{id}/file`)
 
 ## Status
 Active development — planned improvements include scheduled/motion-based
-recording, UI enhancements, proper Alembic migrations, automated tests, and
-a WebRTC streaming variant for low-latency live view.
+recording, UI enhancements, automated tests, and a WebRTC streaming variant
+for low-latency live view.
 
 ## Author
 **Adan Minhas**  

@@ -79,12 +79,38 @@ def get_current_user(
 
 
 def ensure_admin_user(db: Session) -> None:
-    """Create the bootstrap admin user if no users exist."""
-    if db.query(User).count() > 0:
+    """
+    Create the bootstrap admin user if no users exist. Also ensure that the
+    bootstrap username has the is_admin flag, in case it was created before
+    the column existed.
+    """
+    existing = (
+        db.query(User).filter(User.username == settings.admin_username).first()
+    )
+    if existing:
+        if not existing.is_admin:
+            existing.is_admin = True
+            db.commit()
         return
+
+    if db.query(User).count() > 0:
+        # There are users but the configured admin username is missing. Don't
+        # silently elevate someone else — operator can fix manually.
+        return
+
     admin = User(
         username=settings.admin_username,
         password_hash=hash_password(settings.admin_password),
+        is_admin=True,
     )
     db.add(admin)
     db.commit()
+
+
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

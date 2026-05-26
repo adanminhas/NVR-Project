@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.database import SessionLocal
 from app.db_migrations import run_migrations
 from app.models.camera_model import Camera
-from app.routers import auth, cameras, recordings, streams
+from app.routers import auth, cameras, recordings, streams, users
 from app.services import auth_service, recording_service, stream_service
 from app.settings import settings
 
@@ -65,6 +65,7 @@ app.include_router(auth.router)
 app.include_router(cameras.router)
 app.include_router(streams.router)
 app.include_router(recordings.router)
+app.include_router(users.router)
 
 
 @app.get("/")

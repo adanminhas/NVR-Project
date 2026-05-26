@@ -31,7 +31,20 @@ def _ensure_camera_recording_mode_column() -> None:
             conn.commit()
 
 
+def _ensure_user_is_admin_column() -> None:
+    if not _column_exists("users", "is_admin"):
+        with engine.connect() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE users "
+                    "ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"
+                )
+            )
+            conn.commit()
+
+
 def run_migrations() -> None:
     """Create any missing tables and apply ad-hoc column additions."""
     Base.metadata.create_all(bind=engine)
     _ensure_camera_recording_mode_column()
+    _ensure_user_is_admin_column()

@@ -6,6 +6,11 @@
         <li>
           <router-link to="/cameras" active-class="active">Cameras</router-link>
         </li>
+        <li>
+          <router-link to="/recordings" active-class="active">
+            Recordings
+          </router-link>
+        </li>
       </ul>
     </div>
   </nav>

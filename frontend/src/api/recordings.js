@@ -1,4 +1,5 @@
 import client, { API_BASE_URL } from "./client";
+import { getToken } from "./auth";
 
 const PATH = "/api/recordings/";
 
@@ -13,6 +14,8 @@ export default {
     return client.delete(`${PATH}${id}`);
   },
   fileUrl(id) {
-    return `${API_BASE_URL}${PATH}${id}/file`;
+    // <video> tag can't send Authorization header; embed token in query string.
+    const token = encodeURIComponent(getToken() || "");
+    return `${API_BASE_URL}${PATH}${id}/file?token=${token}`;
   },
 };

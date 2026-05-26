@@ -1,50 +1,48 @@
 """
-Lightweight startup migrations.
+Alembic-driven migrations for the backend.
 
-Stage 7 will introduce proper Alembic migrations. Until then, this module runs
-on backend startup to bring existing databases in line with the current models
-(e.g. adding new columns).
+On startup we either:
+  - `alembic stamp head` — if the project's tables already exist but the
+    `alembic_version` table is missing (pre-Alembic install), mark the DB
+    as being at the current head without running any DDL.
+  - `alembic upgrade head` — otherwise (fresh install or behind on
+    migrations), apply pending revisions in order.
+
+To create a new migration after changing models:
+    cd backend
+    ./venv/bin/alembic revision --autogenerate -m "describe change"
+    ./venv/bin/alembic upgrade head
 """
 
-from sqlalchemy import inspect, text
+from pathlib import Path
 
-from app.database import Base, engine
-from app.models import camera_model  # noqa: F401 — register tables
-from app.models import recording_model  # noqa: F401 — register tables
-from app.models import user_model  # noqa: F401 — register tables
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import inspect
+
+from app.database import engine
 
 
-def _column_exists(table: str, column: str) -> bool:
+BASE_DIR = Path(__file__).resolve().parent.parent  # backend/
+ALEMBIC_INI = BASE_DIR / "alembic.ini"
+
+
+def _alembic_config() -> Config:
+    cfg = Config(str(ALEMBIC_INI))
+    cfg.set_main_option("script_location", str(BASE_DIR / "alembic"))
+    return cfg
+
+
+def _has_existing_pre_alembic_schema() -> bool:
     inspector = inspect(engine)
-    return column in {col["name"] for col in inspector.get_columns(table)}
-
-
-def _ensure_camera_recording_mode_column() -> None:
-    if not _column_exists("cameras", "recording_mode"):
-        with engine.connect() as conn:
-            conn.execute(
-                text(
-                    "ALTER TABLE cameras "
-                    "ADD COLUMN recording_mode VARCHAR(20) NOT NULL DEFAULT 'off'"
-                )
-            )
-            conn.commit()
-
-
-def _ensure_user_is_admin_column() -> None:
-    if not _column_exists("users", "is_admin"):
-        with engine.connect() as conn:
-            conn.execute(
-                text(
-                    "ALTER TABLE users "
-                    "ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"
-                )
-            )
-            conn.commit()
+    tables = set(inspector.get_table_names())
+    return "cameras" in tables and "alembic_version" not in tables
 
 
 def run_migrations() -> None:
-    """Create any missing tables and apply ad-hoc column additions."""
-    Base.metadata.create_all(bind=engine)
-    _ensure_camera_recording_mode_column()
-    _ensure_user_is_admin_column()
+    cfg = _alembic_config()
+    if _has_existing_pre_alembic_schema():
+        # Adopt the existing schema as the baseline without touching DDL.
+        command.stamp(cfg, "head")
+    else:
+        command.upgrade(cfg, "head")

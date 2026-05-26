@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
+from app.models.camera_model import Camera
 from app.models.recording_model import Recording
 from app.settings import settings
 
@@ -110,6 +111,7 @@ def index_recordings(db: Session) -> int:
     known_paths = {
         row[0] for row in db.query(Recording.file_path).all()
     }
+    existing_camera_ids = {cid for (cid,) in db.query(Camera.id).all()}
 
     for cam_dir in settings.recordings_dir.iterdir():
         if not cam_dir.is_dir():
@@ -117,6 +119,10 @@ def index_recordings(db: Session) -> int:
         try:
             camera_id = int(cam_dir.name)
         except ValueError:
+            continue
+        if camera_id not in existing_camera_ids:
+            # Orphaned folder (camera was deleted/reset). Skip rather than
+            # trying to insert rows that would fail the foreign key.
             continue
 
         # Sort by name so older comes first; the latest file is the active one.

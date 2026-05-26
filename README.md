@@ -48,10 +48,33 @@ latency once v1 is feature-complete, likely as a sidecar bridge (e.g.
 [`mediamtx`](https://github.com/bluenviron/mediamtx)) exposing the same
 cameras over WebRTC, with the frontend selecting protocol per view.
 
+## Authentication
+
+The API is protected with username/password login backed by JWTs. On first
+startup the backend creates a bootstrap user from the `ADMIN_USERNAME` and
+`ADMIN_PASSWORD` values in `backend/.env`. Change these (or replace the user
+via SQL) before exposing the service beyond your local machine.
+
+RTSP credentials are masked (`rtsp://***:***@host/...`) in API responses so
+they don't leak into the browser console or logs. The full URL is still
+stored on the server. The edit form treats an unchanged masked URL as
+"no change", so you can edit a camera's name without re-entering its
+credentials.
+
+**Known limitation:** HLS segment files (`/streams/<camera>/index.m3u8` and
+the `.ts` chunks) are served via FastAPI's `StaticFiles` mount and are *not*
+gated by JWT. Browsers' `<video>` tags don't send `Authorization` headers
+on segment XHRs, so protecting those would require signed URLs or a cookie-
+based auth model. For a LAN-only deployment behind a router this is
+acceptable; for any internet-facing deployment add a reverse proxy with
+its own auth, or move to the planned WebRTC variant where authentication
+is done at signaling time. Recording playback (`/api/recordings/{id}/file`)
+*is* protected, via a short-lived token in the query string.
+
 ## Status
-Active development — planned improvements include authentication, recording
-management, UI enhancements, and a WebRTC streaming variant for low-latency
-live view.
+Active development — planned improvements include scheduled/motion-based
+recording, UI enhancements, proper Alembic migrations, automated tests, and
+a WebRTC streaming variant for low-latency live view.
 
 ## Author
 **Adan Minhas**  

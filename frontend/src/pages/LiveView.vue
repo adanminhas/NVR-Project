@@ -22,7 +22,15 @@
 
       <div v-if="overlay" class="overlay">
         <p>{{ overlay }}</p>
-        <button v-if="canRetry" class="btn-primary" @click="reloadPlayer">
+        <button
+          v-if="canStart"
+          class="btn-primary"
+          :disabled="starting"
+          @click="startStreamServer"
+        >
+          {{ starting ? "Starting…" : "Start Stream" }}
+        </button>
+        <button v-else-if="canRetry" class="btn-primary" @click="reloadPlayer">
           Retry
         </button>
       </div>
@@ -60,6 +68,7 @@ export default {
       health: null,
       loading: true,
       hlsError: "",
+      starting: false,
     };
   },
 
@@ -91,11 +100,14 @@ export default {
       if (this.healthLabel === "starting")
         return "Stream is starting — first segments take a few seconds…";
       if (this.healthLabel === "offline")
-        return "Stream is offline. Click Start on the Cameras page.";
+        return "Stream is offline.";
       return "";
     },
+    canStart() {
+      return this.healthLabel === "offline" && !this.starting;
+    },
     canRetry() {
-      return !!this.hlsError || this.healthLabel === "offline";
+      return !!this.hlsError;
     },
   },
 
@@ -188,6 +200,20 @@ export default {
         this.hls = null;
       }
       this.startStream();
+    },
+    async startStreamServer() {
+      this.starting = true;
+      this.hlsError = "";
+      try {
+        await streamAPI.start(this.cameraId);
+        // Health-check polling will pick it up and init the player.
+        this.checkHealth();
+      } catch (err) {
+        this.hlsError =
+          err?.response?.data?.detail || err?.message || "Couldn't start stream";
+      } finally {
+        this.starting = false;
+      }
     },
     formatAge(seconds) {
       if (seconds == null) return "—";

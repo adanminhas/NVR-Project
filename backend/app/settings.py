@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./nvr.db"
 
     streams_dir: Path = BASE_DIR / "streams"
+    recordings_dir: Path = BASE_DIR / "recordings"
 
     # Comma-separated list of allowed origins. Use .cors_origins for the parsed list.
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
@@ -31,6 +32,7 @@ class Settings(BaseSettings):
 
     max_concurrent_streams: int = 4
 
+    recording_segment_minutes: int = 10
     retention_days: int = 7
 
     @property
@@ -45,3 +47,4 @@ def get_settings() -> Settings:
 
 settings = get_settings()
 settings.streams_dir.mkdir(parents=True, exist_ok=True)
+settings.recordings_dir.mkdir(parents=True, exist_ok=True)

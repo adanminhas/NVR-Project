@@ -11,6 +11,9 @@
             Recordings
           </router-link>
         </li>
+        <li v-if="authState.user.is_admin">
+          <router-link to="/users" active-class="active">Users</router-link>
+        </li>
       </ul>
       <div v-if="authState.user" class="account">
         <span class="user">{{ authState.user.username }}</span>

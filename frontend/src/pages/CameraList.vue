@@ -25,9 +25,17 @@
       <article v-for="cam in cameras" :key="cam.id" class="camera-card card">
         <div class="card-head">
           <h3>{{ cam.name }}</h3>
-          <span class="badge" :class="statusClass(cam.status)">
-            {{ cam.status || "unknown" }}
-          </span>
+          <div class="badges">
+            <span class="badge" :class="statusClass(cam.status)">
+              {{ cam.status || "unknown" }}
+            </span>
+            <span
+              class="badge"
+              :class="cam.recording_mode === 'continuous' ? 'danger' : 'muted'"
+            >
+              {{ cam.recording_mode === "continuous" ? "rec" : "no rec" }}
+            </span>
+          </div>
         </div>
 
         <p class="rtsp" :title="cam.rtsp_url">{{ cam.rtsp_url }}</p>
@@ -38,6 +46,9 @@
           <router-link :to="`/live/${cam.id}`" class="btn btn-ghost">
             Live View
           </router-link>
+          <button class="btn-ghost" @click="toggleRecording(cam)">
+            {{ cam.recording_mode === "continuous" ? "Stop recording" : "Record" }}
+          </button>
         </div>
 
         <div class="row-actions">
@@ -141,6 +152,16 @@ export default {
       this.closeForm();
       this.loadCameras();
     },
+    async toggleRecording(camera) {
+      const next =
+        camera.recording_mode === "continuous" ? "off" : "continuous";
+      try {
+        await cameraAPI.setRecordingMode(camera.id, next);
+      } catch (err) {
+        alert(err?.response?.data?.detail || "Couldn't change recording mode");
+      }
+      this.loadCameras();
+    },
     async deleteCamera(camera) {
       const ok = window.confirm(
         `Delete "${camera.name}"? This stops the stream and removes its files.`
@@ -198,6 +219,11 @@ export default {
 }
 .card-head h3 {
   margin: 0;
+}
+.badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 .rtsp {
   margin: 0;

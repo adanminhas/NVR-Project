@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     recording_segment_minutes: int = 10
     retention_days: int = 7
 
+    # Auth
+    secret_key: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60 * 24
+    admin_username: str = "admin"
+    admin_password: str = "changeme"
+
     @property
     def cors_origins(self) -> List[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

@@ -9,13 +9,15 @@ from app.schemas import (
     CameraCreate,
     CameraOut,
     CameraUpdate,
+    MASKED_CREDS,
     RecordingModeUpdate,
 )
-from app.services import recording_service, stream_service
+from app.services import auth_service, recording_service, stream_service
 
 router = APIRouter(
     prefix="/api/cameras",
     tags=["Cameras"],
+    dependencies=[Depends(auth_service.get_current_user)],
 )
 
 
@@ -82,7 +84,7 @@ def update_camera(
 
     if camera_in.name is not None:
         camera.name = camera_in.name
-    if camera_in.rtsp_url is not None:
+    if camera_in.rtsp_url is not None and MASKED_CREDS not in camera_in.rtsp_url:
         # If recording is active, restart it so ffmpeg picks up the new URL.
         was_recording = camera.recording_mode == "continuous"
         camera.rtsp_url = camera_in.rtsp_url

@@ -18,4 +18,7 @@ export default {
   remove(id) {
     return client.delete(`${PATH}${id}`);
   },
+  setRecordingMode(id, mode) {
+    return client.put(`${PATH}${id}/recording-mode`, { mode });
+  },
 };

@@ -71,6 +71,17 @@ class UserOut(BaseModel):
 
     id: int
     username: str
+    is_admin: bool = False
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    is_admin: bool = False
+
+
+class PasswordChange(BaseModel):
+    password: str
 
 
 class RecordingModeUpdate(BaseModel):

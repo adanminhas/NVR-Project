@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="navbar-inner">
       <router-link to="/" class="brand">Pi NVR</router-link>
-      <ul class="menu">
+      <ul v-if="authState.user" class="menu">
         <li>
           <router-link to="/cameras" active-class="active">Cameras</router-link>
         </li>
@@ -12,9 +12,29 @@
           </router-link>
         </li>
       </ul>
+      <div v-if="authState.user" class="account">
+        <span class="user">{{ authState.user.username }}</span>
+        <button class="btn-ghost small" @click="onLogout">Logout</button>
+      </div>
     </div>
   </nav>
 </template>
+
+<script>
+import { authState, logout } from "../api/auth";
+
+export default {
+  data() {
+    return { authState };
+  },
+  methods: {
+    onLogout() {
+      logout();
+      this.$router.replace({ name: "login" });
+    },
+  },
+};
+</script>
 
 <style scoped>
 .navbar {
@@ -28,6 +48,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 .brand {
   font-weight: 700;
@@ -42,7 +63,7 @@
   list-style: none;
   display: flex;
   gap: 0.25rem;
-  margin: 0;
+  margin: 0 auto 0 0;
   padding: 0;
 }
 .menu a {
@@ -59,5 +80,18 @@
 .menu a.active {
   color: var(--text);
   background-color: var(--accent-soft);
+}
+.account {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.user {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.small {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
 }
 </style>

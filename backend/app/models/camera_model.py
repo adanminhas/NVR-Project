@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from app.database import Base
 
+
 class Camera(Base):
     __tablename__ = "cameras"
 
@@ -8,3 +9,4 @@ class Camera(Base):
     name = Column(String(100), nullable=False)
     rtsp_url = Column(String(255), nullable=False)
     status = Column(String(50))
+    recording_mode = Column(String(20), nullable=False, default="off", server_default="off")

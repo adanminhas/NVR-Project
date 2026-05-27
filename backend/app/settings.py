@@ -23,6 +23,9 @@ class Settings(BaseSettings):
 
     # Comma-separated list of allowed origins. Use .cors_origins for the parsed list.
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    # Optional regex; if set, any origin matching it is also allowed. Handy in
+    # dev to permit any LAN IP without listing each one.
+    cors_origin_regex: str = ""
 
     ffmpeg_path: str = "ffmpeg"
     hls_segment_seconds: int = 2

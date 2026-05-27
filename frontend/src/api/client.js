@@ -1,6 +1,19 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:8000";
+function resolveBaseURL() {
+  const envURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
+  if (envURL) return envURL;
+  // Fallback: derive from the page origin so the app works on LAN/mobile
+  // when accessed via the host's IP — assumes the backend runs on port 8000
+  // of the same host.
+  if (typeof window !== "undefined" && window.location) {
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:8000`;
+  }
+  return "http://localhost:8000";
+}
+
+const baseURL = resolveBaseURL();
 
 const client = axios.create({ baseURL });
 

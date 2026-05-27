@@ -4,25 +4,14 @@
       <h2>Sign in</h2>
       <p class="subtitle">Pi NVR</p>
 
-      <form @submit.prevent="onSubmit" class="form">
+      <form class="form" @submit.prevent="onSubmit">
         <label class="field">
           <span>Username</span>
-          <input
-            v-model="form.username"
-            type="text"
-            autocomplete="username"
-            required
-            autofocus
-          />
+          <input v-model="form.username" type="text" autocomplete="username" required autofocus />
         </label>
         <label class="field">
           <span>Password</span>
-          <input
-            v-model="form.password"
-            type="password"
-            autocomplete="current-password"
-            required
-          />
+          <input v-model="form.password" type="password" autocomplete="current-password" required />
         </label>
 
         <div v-if="error" class="error">{{ error }}</div>
@@ -55,8 +44,7 @@ export default {
         const redirect = this.$route.query.redirect || "/cameras";
         this.$router.replace(redirect);
       } catch (err) {
-        this.error =
-          err?.response?.data?.detail || err?.message || "Sign-in failed";
+        this.error = err?.response?.data?.detail || err?.message || "Sign-in failed";
       } finally {
         this.submitting = false;
       }

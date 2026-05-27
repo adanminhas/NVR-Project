@@ -7,9 +7,7 @@
           <router-link to="/cameras" active-class="active">Cameras</router-link>
         </li>
         <li>
-          <router-link to="/recordings" active-class="active">
-            Recordings
-          </router-link>
+          <router-link to="/recordings" active-class="active"> Recordings </router-link>
         </li>
         <li v-if="authState.user.is_admin">
           <router-link to="/users" active-class="active">Users</router-link>

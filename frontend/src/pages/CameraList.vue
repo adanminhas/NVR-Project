@@ -29,10 +29,7 @@
             <span class="badge" :class="statusClass(cam.status)">
               {{ cam.status || "unknown" }}
             </span>
-            <span
-              class="badge"
-              :class="cam.recording_mode === 'continuous' ? 'danger' : 'muted'"
-            >
+            <span class="badge" :class="cam.recording_mode === 'continuous' ? 'danger' : 'muted'">
               {{ cam.recording_mode === "continuous" ? "rec" : "no rec" }}
             </span>
           </div>
@@ -43,9 +40,7 @@
         <div class="buttons">
           <button class="btn-primary" @click="startStream(cam.id)">Start</button>
           <button @click="stopStream(cam.id)">Stop</button>
-          <router-link :to="`/live/${cam.id}`" class="btn btn-ghost">
-            Live View
-          </router-link>
+          <router-link :to="`/live/${cam.id}`" class="btn btn-ghost"> Live View </router-link>
           <button class="btn-ghost" @click="toggleRecording(cam)">
             {{ cam.recording_mode === "continuous" ? "Stop recording" : "Record" }}
           </button>
@@ -53,9 +48,7 @@
 
         <div class="row-actions">
           <button class="btn-ghost small" @click="openEdit(cam)">Edit</button>
-          <button class="btn-danger small" @click="deleteCamera(cam)">
-            Delete
-          </button>
+          <button class="btn-danger small" @click="deleteCamera(cam)">Delete</button>
         </div>
       </article>
     </div>
@@ -99,8 +92,7 @@ export default {
         const res = await cameraAPI.list();
         this.cameras = res.data;
       } catch (err) {
-        this.loadError =
-          err?.response?.data?.detail || err?.message || "Network error";
+        this.loadError = err?.response?.data?.detail || err?.message || "Network error";
       } finally {
         this.loading = false;
       }
@@ -153,8 +145,7 @@ export default {
       this.loadCameras();
     },
     async toggleRecording(camera) {
-      const next =
-        camera.recording_mode === "continuous" ? "off" : "continuous";
+      const next = camera.recording_mode === "continuous" ? "off" : "continuous";
       try {
         await cameraAPI.setRecordingMode(camera.id, next);
       } catch (err) {
@@ -164,7 +155,7 @@ export default {
     },
     async deleteCamera(camera) {
       const ok = window.confirm(
-        `Delete "${camera.name}"? This stops the stream and removes its files.`
+        `Delete "${camera.name}"? This stops the stream and removes its files.`,
       );
       if (!ok) return;
       try {

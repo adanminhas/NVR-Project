@@ -20,10 +20,7 @@
       <li v-for="user in users" :key="user.id" class="user-row card">
         <div class="user-info">
           <strong>{{ user.username }}</strong>
-          <span
-            class="badge"
-            :class="user.is_admin ? 'success' : 'muted'"
-          >
+          <span class="badge" :class="user.is_admin ? 'success' : 'muted'">
             {{ user.is_admin ? "admin" : "user" }}
           </span>
           <span v-if="isSelf(user)" class="badge muted">you</span>
@@ -72,8 +69,7 @@ export default {
         const res = await userAPI.list();
         this.users = res.data;
       } catch (err) {
-        this.loadError =
-          err?.response?.data?.detail || err?.message || "Network error";
+        this.loadError = err?.response?.data?.detail || err?.message || "Network error";
       } finally {
         this.loading = false;
       }

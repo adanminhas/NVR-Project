@@ -4,9 +4,7 @@
       <div class="modal-card card" role="dialog" aria-modal="true">
         <header class="modal-header">
           <h3>{{ title }}</h3>
-          <button class="btn-ghost icon" @click="$emit('close')" aria-label="Close">
-            ×
-          </button>
+          <button class="btn-ghost icon" aria-label="Close" @click="$emit('close')">×</button>
         </header>
         <div class="modal-body">
           <slot />

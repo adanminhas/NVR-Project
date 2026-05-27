@@ -20,19 +20,19 @@ The dev server defaults to <http://localhost:5173>.
 
 ## Environment
 
-| Variable             | Default                 | Purpose                                    |
-| -------------------- | ----------------------- | ------------------------------------------ |
-| `VITE_API_BASE_URL`  | `http://localhost:8000` | Backend origin used by axios and HLS URLs. |
+| Variable            | Default                 | Purpose                                    |
+| ------------------- | ----------------------- | ------------------------------------------ |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | Backend origin used by axios and HLS URLs. |
 
 Vite only exposes variables prefixed with `VITE_` to client-side code.
 
 ## Scripts
 
-| Command           | Description                                |
-| ----------------- | ------------------------------------------ |
-| `npm run dev`     | Start the Vite dev server with HMR.        |
-| `npm run build`   | Production build into `dist`.              |
-| `npm run preview` | Serve the production build locally.        |
+| Command           | Description                         |
+| ----------------- | ----------------------------------- |
+| `npm run dev`     | Start the Vite dev server with HMR. |
+| `npm run build`   | Production build into `dist`.       |
+| `npm run preview` | Serve the production build locally. |
 
 ## Project structure
 

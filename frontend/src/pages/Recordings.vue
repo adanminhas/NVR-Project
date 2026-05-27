@@ -19,19 +19,11 @@
       </label>
       <label class="field">
         <span>From</span>
-        <input
-          type="date"
-          v-model="filters.from"
-          @change="loadRecordings"
-        />
+        <input v-model="filters.from" type="date" @change="loadRecordings" />
       </label>
       <label class="field">
         <span>To</span>
-        <input
-          type="date"
-          v-model="filters.to"
-          @change="loadRecordings"
-        />
+        <input v-model="filters.to" type="date" @change="loadRecordings" />
       </label>
       <button class="btn-ghost reset" @click="resetFilters">Reset</button>
     </div>
@@ -65,12 +57,8 @@
             </div>
           </div>
           <div class="row-actions" @click.stop>
-            <a class="btn btn-ghost small" :href="downloadUrl(rec.id)" download>
-              Download
-            </a>
-            <button class="btn-danger small" @click="deleteRecording(rec)">
-              Delete
-            </button>
+            <a class="btn btn-ghost small" :href="downloadUrl(rec.id)" download> Download </a>
+            <button class="btn-danger small" @click="deleteRecording(rec)">Delete</button>
           </div>
         </div>
 
@@ -125,8 +113,7 @@ export default {
         const res = await recordingAPI.list(params);
         this.recordings = res.data;
       } catch (err) {
-        this.loadError =
-          err?.response?.data?.detail || err?.message || "Network error";
+        this.loadError = err?.response?.data?.detail || err?.message || "Network error";
       } finally {
         this.loading = false;
       }

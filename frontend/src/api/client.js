@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const baseURL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:8000";
+const baseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:8000";
 
 const client = axios.create({ baseURL });
 
@@ -29,7 +28,7 @@ client.interceptors.response.use(
       onUnauthorized();
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export const API_BASE_URL = baseURL;

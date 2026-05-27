@@ -1,14 +1,8 @@
 <template>
-  <form @submit.prevent="onSubmit" class="form">
+  <form class="form" @submit.prevent="onSubmit">
     <label class="field">
       <span>Name</span>
-      <input
-        v-model="form.name"
-        type="text"
-        placeholder="Front door"
-        required
-        autofocus
-      />
+      <input v-model="form.name" type="text" placeholder="Front door" required autofocus />
     </label>
 
     <label class="field">
@@ -27,9 +21,7 @@
     <div v-if="error" class="error">{{ error }}</div>
 
     <div class="actions">
-      <button type="button" class="btn-ghost" @click="$emit('cancel')">
-        Cancel
-      </button>
+      <button type="button" class="btn-ghost" @click="$emit('cancel')">Cancel</button>
       <button type="submit" class="btn-primary" :disabled="saving">
         {{ saving ? "Saving…" : submitLabel }}
       </button>

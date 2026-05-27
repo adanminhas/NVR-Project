@@ -1,9 +1,7 @@
 <template>
   <section class="page">
     <header class="live-header">
-      <button class="btn-ghost" @click="$router.push('/cameras')">
-        ← Back
-      </button>
+      <button class="btn-ghost" @click="$router.push('/cameras')">← Back</button>
       <div class="live-title">
         <h2>Live View</h2>
         <p class="subtitle">Camera #{{ cameraId }}</p>
@@ -12,27 +10,14 @@
     </header>
 
     <div class="video-wrapper card">
-      <video
-        ref="videoPlayer"
-        controls
-        autoplay
-        muted
-        playsinline
-      ></video>
+      <video ref="videoPlayer" controls autoplay muted playsinline></video>
 
       <div v-if="overlay" class="overlay">
         <p>{{ overlay }}</p>
-        <button
-          v-if="canStart"
-          class="btn-primary"
-          :disabled="starting"
-          @click="startStreamServer"
-        >
+        <button v-if="canStart" class="btn-primary" :disabled="starting" @click="startStreamServer">
           {{ starting ? "Starting…" : "Start Stream" }}
         </button>
-        <button v-else-if="canRetry" class="btn-primary" @click="reloadPlayer">
-          Retry
-        </button>
+        <button v-else-if="canRetry" class="btn-primary" @click="reloadPlayer">Retry</button>
       </div>
     </div>
 
@@ -58,7 +43,9 @@ import Hls from "hls.js";
 import streamAPI from "../api/streams";
 
 export default {
-  props: ["id"],
+  props: {
+    id: { type: [String, Number], required: true },
+  },
 
   data() {
     return {
@@ -99,8 +86,7 @@ export default {
       if (this.healthLabel === "connecting") return "Connecting…";
       if (this.healthLabel === "starting")
         return "Stream is starting — first segments take a few seconds…";
-      if (this.healthLabel === "offline")
-        return "Stream is offline.";
+      if (this.healthLabel === "offline") return "Stream is offline.";
       return "";
     },
     canStart() {
@@ -178,8 +164,7 @@ export default {
         this.health = res.data;
 
         const playerNotStarted = !this.hls && this.$refs.videoPlayer;
-        const readyToStart =
-          this.health.ffmpeg_running && this.health.playlist_exists;
+        const readyToStart = this.health.ffmpeg_running && this.health.playlist_exists;
 
         if (playerNotStarted && readyToStart) {
           this.startStream();
@@ -189,8 +174,7 @@ export default {
         }
       } catch (err) {
         this.health = null;
-        this.hlsError =
-          err?.response?.data?.detail || err?.message || "Health check failed";
+        this.hlsError = err?.response?.data?.detail || err?.message || "Health check failed";
       }
     },
     reloadPlayer({ silent = false } = {}) {
@@ -209,8 +193,7 @@ export default {
         // Health-check polling will pick it up and init the player.
         this.checkHealth();
       } catch (err) {
-        this.hlsError =
-          err?.response?.data?.detail || err?.message || "Couldn't start stream";
+        this.hlsError = err?.response?.data?.detail || err?.message || "Couldn't start stream";
       } finally {
         this.starting = false;
       }

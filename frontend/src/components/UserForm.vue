@@ -1,14 +1,8 @@
 <template>
-  <form @submit.prevent="onSubmit" class="form">
+  <form class="form" @submit.prevent="onSubmit">
     <label class="field">
       <span>Username</span>
-      <input
-        v-model="form.username"
-        type="text"
-        autocomplete="off"
-        required
-        autofocus
-      />
+      <input v-model="form.username" type="text" autocomplete="off" required autofocus />
     </label>
 
     <label class="field">
@@ -31,9 +25,7 @@
     <div v-if="error" class="error">{{ error }}</div>
 
     <div class="actions">
-      <button type="button" class="btn-ghost" @click="$emit('cancel')">
-        Cancel
-      </button>
+      <button type="button" class="btn-ghost" @click="$emit('cancel')">Cancel</button>
       <button type="submit" class="btn-primary" :disabled="saving">
         {{ saving ? "Saving…" : "Add user" }}
       </button>
@@ -61,8 +53,7 @@ export default {
       try {
         await this.onSave({ ...this.form });
       } catch (err) {
-        this.error =
-          err?.response?.data?.detail || err?.message || "Save failed";
+        this.error = err?.response?.data?.detail || err?.message || "Save failed";
       } finally {
         this.saving = false;
       }

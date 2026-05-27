@@ -43,6 +43,21 @@ def test_indexer_picks_up_real_files(client, auth_headers, make_camera):
     assert older["duration_seconds"] == 600
 
 
+def test_latest_file_is_finalized_when_not_recording(client, auth_headers, make_camera):
+    # ffmpeg isn't recording (no start_recording was called), so even a single
+    # file in the folder should be reported with a real duration, not null.
+    cam = make_camera()
+    cam_dir = settings.recordings_dir / str(cam["id"])
+    cam_dir.mkdir(parents=True, exist_ok=True)
+    only_file = cam_dir / "2026-05-26_09-00-00.mp4"
+    only_file.write_bytes(b"finished segment")
+
+    body = client.get("/api/recordings/", headers=auth_headers).json()
+    assert len(body) == 1
+    assert body[0]["duration_seconds"] is not None
+    assert body[0]["ended_at"] is not None
+
+
 def test_delete_removes_file_and_row(client, auth_headers, make_camera):
     cam = make_camera()
     cam_dir = settings.recordings_dir / str(cam["id"])

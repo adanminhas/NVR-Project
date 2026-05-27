@@ -6,6 +6,7 @@ patched, so tests never spawn real ffmpeg and never touch the dev database.
 """
 
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -70,9 +71,24 @@ def client():
         yield c
 
 
+def _wipe_dir_contents(path: Path) -> None:
+    if not path.exists():
+        return
+    for child in path.iterdir():
+        if child.is_dir():
+            shutil.rmtree(child, ignore_errors=True)
+        else:
+            try:
+                child.unlink()
+            except OSError:
+                pass
+
+
 @pytest.fixture(autouse=True)
 def _reset_state():
-    """Wipe rows and in-memory process maps between tests."""
+    """Wipe rows, in-memory process maps, and on-disk dirs between tests."""
+    _wipe_dir_contents(settings.recordings_dir)
+    _wipe_dir_contents(settings.streams_dir)
     db = SessionLocal()
     try:
         db.query(Recording).delete()

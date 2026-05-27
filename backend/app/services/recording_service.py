@@ -150,6 +150,11 @@ def index_recordings(db: Session) -> int:
                 if next_started:
                     ended_at = next_started
                     duration = int((next_started - started_at).total_seconds())
+            elif not is_recording(camera_id):
+                # Newest file but ffmpeg isn't writing anymore — finalize it
+                # using the file's last-modified time.
+                ended_at = datetime.fromtimestamp(stat.st_mtime)
+                duration = max(0, int((ended_at - started_at).total_seconds()))
 
             path_str = str(file_path)
             existing = db.query(Recording).filter(Recording.file_path == path_str).first()

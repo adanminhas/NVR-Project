@@ -102,6 +102,7 @@ export default {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 .page-header h2 {
   margin: 0 0 0.25rem;
@@ -140,5 +141,21 @@ export default {
 .small {
   padding: 0.35rem 0.7rem;
   font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .user-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .user-info {
+    flex-wrap: wrap;
+  }
+  .small {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+    align-self: flex-end;
+  }
 }
 </style>

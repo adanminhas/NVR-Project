@@ -259,4 +259,29 @@ export default {
   display: block;
   object-fit: contain;
 }
+
+@media (max-width: 640px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .field {
+    min-width: 0;
+  }
+  .reset {
+    margin-left: 0;
+  }
+  .row-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .row-actions {
+    justify-content: flex-end;
+  }
+  .small {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
 </style>

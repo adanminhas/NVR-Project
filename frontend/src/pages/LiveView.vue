@@ -214,6 +214,7 @@ export default {
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.25rem;
+  flex-wrap: wrap;
 }
 .live-title h2 {
   margin: 0 0 0.1rem;
@@ -294,5 +295,18 @@ video {
   max-height: 200px;
   overflow: auto;
   white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .live-header > .badge {
+    margin-left: 0;
+  }
+  .diagnostics dl {
+    grid-template-columns: 1fr;
+    row-gap: 0.1rem;
+  }
+  .diagnostics dt {
+    margin-top: 0.4rem;
+  }
 }
 </style>

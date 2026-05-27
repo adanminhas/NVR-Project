@@ -1,18 +1,15 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
 from app.database import SessionLocal
 from app.models.camera_model import Camera
 from app.schemas import (
+    MASKED_CREDS,
     CameraCreate,
     CameraOut,
     CameraUpdate,
-    MASKED_CREDS,
     RecordingModeUpdate,
 )
 from app.services import auth_service, recording_service, stream_service
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(
     prefix="/api/cameras",
@@ -39,7 +36,7 @@ def _apply_recording_mode(camera: Camera, mode: str) -> None:
         recording_service.stop_recording(camera.id)
 
 
-@router.get("/", response_model=List[CameraOut])
+@router.get("/", response_model=list[CameraOut])
 def list_cameras(db: Session = Depends(get_db)):
     return db.query(Camera).all()
 

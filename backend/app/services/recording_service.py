@@ -2,18 +2,15 @@ import re
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from subprocess import Popen, STDOUT
-from typing import Dict, List, Optional
-
-from sqlalchemy.orm import Session
+from subprocess import STDOUT, Popen
 
 from app.models.camera_model import Camera
 from app.models.recording_model import Recording
 from app.settings import settings
-
+from sqlalchemy.orm import Session
 
 # Track running recording ffmpeg processes: {camera_id: Popen}
-_recording_processes: Dict[int, Popen] = {}
+_recording_processes: dict[int, Popen] = {}
 
 # Filenames look like: YYYY-MM-DD_HH-MM-SS.mp4
 _FILENAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})\.mp4$")
@@ -46,17 +43,28 @@ def start_recording(camera_id: int, rtsp_url: str) -> None:
 
     cmd = [
         settings.ffmpeg_path,
-        "-rtsp_transport", "tcp",
-        "-stream_loop", "-1",
-        "-fflags", "+genpts+discardcorrupt",
-        "-i", rtsp_url,
-        "-c", "copy",
-        "-f", "segment",
-        "-strftime", "1",
-        "-segment_time", str(segment_seconds),
-        "-reset_timestamps", "1",
-        "-segment_format", "mp4",
-        "-segment_format_options", "movflags=+faststart+frag_keyframe+empty_moov",
+        "-rtsp_transport",
+        "tcp",
+        "-stream_loop",
+        "-1",
+        "-fflags",
+        "+genpts+discardcorrupt",
+        "-i",
+        rtsp_url,
+        "-c",
+        "copy",
+        "-f",
+        "segment",
+        "-strftime",
+        "1",
+        "-segment_time",
+        str(segment_seconds),
+        "-reset_timestamps",
+        "1",
+        "-segment_format",
+        "mp4",
+        "-segment_format_options",
+        "movflags=+faststart+frag_keyframe+empty_moov",
         pattern,
     ]
 
@@ -85,15 +93,13 @@ def delete_recording_dir(camera_id: int) -> None:
         shutil.rmtree(cam_dir, ignore_errors=True)
 
 
-def _parse_started_at(name: str) -> Optional[datetime]:
+def _parse_started_at(name: str) -> datetime | None:
     m = _FILENAME_RE.match(name)
     if not m:
         return None
     date_part, time_part = m.groups()
     try:
-        return datetime.strptime(
-            f"{date_part}_{time_part}", "%Y-%m-%d_%H-%M-%S"
-        )
+        return datetime.strptime(f"{date_part}_{time_part}", "%Y-%m-%d_%H-%M-%S")
     except ValueError:
         return None
 
@@ -108,9 +114,7 @@ def index_recordings(db: Session) -> int:
         return 0
 
     added = 0
-    known_paths = {
-        row[0] for row in db.query(Recording.file_path).all()
-    }
+    known_paths = {row[0] for row in db.query(Recording.file_path).all()}
     existing_camera_ids = {cid for (cid,) in db.query(Camera.id).all()}
 
     for cam_dir in settings.recordings_dir.iterdir():
@@ -148,11 +152,7 @@ def index_recordings(db: Session) -> int:
                     duration = int((next_started - started_at).total_seconds())
 
             path_str = str(file_path)
-            existing = (
-                db.query(Recording)
-                .filter(Recording.file_path == path_str)
-                .first()
-            )
+            existing = db.query(Recording).filter(Recording.file_path == path_str).first()
             if existing:
                 existing.size_bytes = stat.st_size
                 if ended_at and not existing.ended_at:
@@ -179,10 +179,10 @@ def index_recordings(db: Session) -> int:
 
 def list_recordings(
     db: Session,
-    camera_id: Optional[int] = None,
-    start_from: Optional[datetime] = None,
-    start_to: Optional[datetime] = None,
-) -> List[Recording]:
+    camera_id: int | None = None,
+    start_from: datetime | None = None,
+    start_to: datetime | None = None,
+) -> list[Recording]:
     index_recordings(db)
     q = db.query(Recording)
     if camera_id is not None:
@@ -200,11 +200,7 @@ def sweep_retention(db: Session) -> int:
         return 0
 
     cutoff = datetime.utcnow() - timedelta(days=settings.retention_days)
-    old = (
-        db.query(Recording)
-        .filter(Recording.started_at < cutoff)
-        .all()
-    )
+    old = db.query(Recording).filter(Recording.started_at < cutoff).all()
     deleted = 0
     for rec in old:
         try:

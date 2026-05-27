@@ -1,3 +1,4 @@
+from app.database import Base
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -7,8 +8,6 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.orm import relationship
-
-from app.database import Base
 
 
 class Recording(Base):

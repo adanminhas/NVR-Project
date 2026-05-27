@@ -1,9 +1,8 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 from urllib.parse import urlparse, urlunparse
 
 from pydantic import BaseModel, ConfigDict, field_serializer
-
 
 MASKED_CREDS = "***:***"
 
@@ -38,17 +37,17 @@ class CameraCreate(CameraBase):
 
 
 class CameraUpdate(BaseModel):
-    name: Optional[str] = None
-    rtsp_url: Optional[str] = None
-    status: Optional[str] = None
-    recording_mode: Optional[RecordingMode] = None
+    name: str | None = None
+    rtsp_url: str | None = None
+    status: str | None = None
+    recording_mode: RecordingMode | None = None
 
 
 class CameraOut(CameraBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    status: Optional[str] = None
+    status: str | None = None
     recording_mode: RecordingMode = "off"
 
     @field_serializer("rtsp_url")
@@ -95,6 +94,6 @@ class RecordingOut(BaseModel):
     camera_id: int
     file_path: str
     started_at: datetime
-    ended_at: Optional[datetime] = None
-    duration_seconds: Optional[int] = None
+    ended_at: datetime | None = None
+    duration_seconds: int | None = None
     size_bytes: int

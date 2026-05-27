@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
 from app.database import SessionLocal
 from app.models.camera_model import Camera
 from app.services import auth_service, stream_service
 from app.services.stream_service import StreamLimitExceeded
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(
     prefix="/api/streams",
@@ -43,7 +42,7 @@ def start_camera_stream(camera_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(exc),
-        )
+        ) from exc
 
     camera.status = "streaming"
     db.commit()

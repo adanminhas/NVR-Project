@@ -1,13 +1,12 @@
 import shutil
 import time
 from pathlib import Path
-from subprocess import Popen, STDOUT
-from typing import Dict, Optional
+from subprocess import STDOUT, Popen
 
 from app.settings import settings
 
 # Track running ffmpeg processes in memory: {camera_id: Popen}
-_processes: Dict[int, Popen] = {}
+_processes: dict[int, Popen] = {}
 
 
 class StreamLimitExceeded(Exception):
@@ -72,9 +71,7 @@ def start_stream(camera_id: int, rtsp_url: str) -> Path:
         return get_stream_dir(camera_id) / "index.m3u8"
 
     if _running_count() >= settings.max_concurrent_streams:
-        raise StreamLimitExceeded(
-            f"Already running {settings.max_concurrent_streams} streams"
-        )
+        raise StreamLimitExceeded(f"Already running {settings.max_concurrent_streams} streams")
 
     out_dir = get_stream_dir(camera_id)
     _cleanup_segments(camera_id)
@@ -82,16 +79,26 @@ def start_stream(camera_id: int, rtsp_url: str) -> Path:
 
     cmd = [
         settings.ffmpeg_path,
-        "-rtsp_transport", "tcp",
-        "-stream_loop", "-1",       # loop test/file sources forever; no-op for live RTSP
-        "-fflags", "+genpts+discardcorrupt",  # clean timestamps from misbehaving sources
-        "-i", rtsp_url,
-        "-c:v", "copy",
-        "-c:a", "aac",
-        "-f", "hls",
-        "-hls_time", str(settings.hls_segment_seconds),
-        "-hls_list_size", str(settings.hls_list_size),
-        "-hls_flags", "delete_segments+omit_endlist",
+        "-rtsp_transport",
+        "tcp",
+        "-stream_loop",
+        "-1",  # loop test/file sources forever; no-op for live RTSP
+        "-fflags",
+        "+genpts+discardcorrupt",  # clean timestamps from misbehaving sources
+        "-i",
+        rtsp_url,
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-f",
+        "hls",
+        "-hls_time",
+        str(settings.hls_segment_seconds),
+        "-hls_list_size",
+        str(settings.hls_list_size),
+        "-hls_flags",
+        "delete_segments+omit_endlist",
         str(playlist_path),
     ]
 
@@ -116,14 +123,14 @@ def stop_stream(camera_id: int) -> bool:
     return False
 
 
-def _file_age_seconds(path: Path) -> Optional[float]:
+def _file_age_seconds(path: Path) -> float | None:
     try:
         return max(0.0, time.time() - path.stat().st_mtime)
     except FileNotFoundError:
         return None
 
 
-def _newest_segment(camera_id: int) -> Optional[Path]:
+def _newest_segment(camera_id: int) -> Path | None:
     stream_dir = settings.streams_dir / str(camera_id)
     if not stream_dir.exists():
         return None
@@ -151,9 +158,7 @@ def get_stream_health(camera_id: int) -> dict:
     newest_segment = _newest_segment(camera_id)
 
     playlist_age = _file_age_seconds(playlist_path)
-    segment_age = (
-        _file_age_seconds(newest_segment) if newest_segment is not None else None
-    )
+    segment_age = _file_age_seconds(newest_segment) if newest_segment is not None else None
 
     running = is_stream_running(camera_id)
     # "live" = ffmpeg is alive AND a fresh segment landed in the last 10s

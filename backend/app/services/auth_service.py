@@ -1,16 +1,13 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-
 from app.database import SessionLocal
 from app.models.user_model import User
 from app.settings import settings
-
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
@@ -35,14 +32,12 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(subject: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.access_token_expire_minutes
-    )
+    expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {"sub": subject, "exp": expire}
     return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
-def authenticate(db: Session, username: str, password: str) -> Optional[User]:
+def authenticate(db: Session, username: str, password: str) -> User | None:
     user = db.query(User).filter(User.username == username).first()
     if not user:
         return None
@@ -52,7 +47,7 @@ def authenticate(db: Session, username: str, password: str) -> Optional[User]:
 
 
 def get_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
+    token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
     creds_error = HTTPException(
@@ -63,14 +58,12 @@ def get_current_user(
     if not token:
         raise creds_error
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.jwt_algorithm]
-        )
-        username: Optional[str] = payload.get("sub")
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
+        username: str | None = payload.get("sub")
         if not username:
             raise creds_error
-    except jwt.PyJWTError:
-        raise creds_error
+    except jwt.PyJWTError as exc:
+        raise creds_error from exc
 
     user = db.query(User).filter(User.username == username).first()
     if not user:
@@ -84,9 +77,7 @@ def ensure_admin_user(db: Session) -> None:
     bootstrap username has the is_admin flag, in case it was created before
     the column existed.
     """
-    existing = (
-        db.query(User).filter(User.username == settings.admin_username).first()
-    )
+    existing = db.query(User).filter(User.username == settings.admin_username).first()
     if existing:
         if not existing.is_admin:
             existing.is_admin = True

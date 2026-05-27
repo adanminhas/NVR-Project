@@ -1,18 +1,16 @@
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
-
 from app.database import SessionLocal
 from app.models.recording_model import Recording
 from app.models.user_model import User
 from app.schemas import RecordingOut
 from app.services import auth_service, recording_service
 from app.settings import settings
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
 
 router = APIRouter(
     prefix="/api/recordings",
@@ -34,25 +32,23 @@ def _verify_query_token(token: str, db: Session) -> User:
         detail="Not authenticated",
     )
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.jwt_algorithm]
-        )
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
         username = payload.get("sub")
         if not username:
             raise creds_error
-    except jwt.PyJWTError:
-        raise creds_error
+    except jwt.PyJWTError as exc:
+        raise creds_error from exc
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise creds_error
     return user
 
 
-@router.get("/", response_model=List[RecordingOut])
+@router.get("/", response_model=list[RecordingOut])
 def list_recordings(
-    camera_id: Optional[int] = Query(None),
-    start_from: Optional[datetime] = Query(None),
-    start_to: Optional[datetime] = Query(None),
+    camera_id: int | None = Query(None),
+    start_from: datetime | None = Query(None),
+    start_to: datetime | None = Query(None),
     db: Session = Depends(get_db),
     _user: User = Depends(auth_service.get_current_user),
 ):

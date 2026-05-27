@@ -22,7 +22,6 @@ from sqlalchemy import inspect
 
 from app.database import engine
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent  # backend/
 ALEMBIC_INI = BASE_DIR / "alembic.ini"
 

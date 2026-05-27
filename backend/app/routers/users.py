@@ -1,13 +1,10 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-
 from app.database import SessionLocal
 from app.models.user_model import User
 from app.schemas import PasswordChange, UserCreate, UserOut
 from app.services import auth_service
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 router = APIRouter(
     prefix="/api/users",
@@ -24,7 +21,7 @@ def get_db():
         db.close()
 
 
-@router.get("/", response_model=List[UserOut])
+@router.get("/", response_model=list[UserOut])
 def list_users(db: Session = Depends(get_db)):
     return db.query(User).order_by(User.username).all()
 
@@ -50,12 +47,12 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     try:
         db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Username already exists",
-        )
+        ) from exc
     db.refresh(user)
     return user
 

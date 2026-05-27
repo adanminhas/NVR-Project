@@ -156,6 +156,8 @@ textarea {
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.75rem;
   font: inherit;
+  /* 16px minimum to stop iOS Safari from auto-zooming on focus. */
+  font-size: max(16px, 1em);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -223,4 +225,19 @@ textarea:focus {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem 0.85rem;
+  }
+  h1 {
+    font-size: 1.4rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+  }
+  .card {
+    padding: 1rem;
+  }
 }

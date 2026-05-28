@@ -123,6 +123,67 @@ cd backend
 ./venv/bin/alembic upgrade head
 ```
 
+## Deploying to a Raspberry Pi
+
+One-shot installer for a fresh Raspberry Pi OS Lite (64-bit, Bookworm). Also
+works on any Debian/Ubuntu host.
+
+```bash
+# On the Pi, after SSH'ing in:
+sudo apt-get update && sudo apt-get install -y git
+git clone https://github.com/adanminhas/NVR-Project ~/pi-nvr
+cd ~/pi-nvr
+bash scripts/install_pi.sh
+```
+
+The script:
+
+- Installs system packages: `python3`, `python3-venv`, `ffmpeg`, Node 20,
+  `avahi-daemon` (so the Pi is reachable at `<hostname>.local`).
+- Sets up the backend venv and installs Python dependencies.
+- Writes `backend/.env` with a random `SECRET_KEY`, a random `ADMIN_PASSWORD`,
+  SQLite as the database (no MySQL server needed), and a CORS regex that
+  permits LAN IPs.
+- Runs Alembic migrations and creates the admin user on first start.
+- Builds the frontend with `npm run build`. The backend serves the built
+  files directly, so there's no separate frontend service in production.
+- Registers a systemd unit `pi-nvr.service` that auto-starts on boot, restarts
+  on failure, and logs to `journald`.
+
+When it finishes it prints the URL to open and the generated admin password.
+Save the password — it's also in `backend/.env`.
+
+### Managing the service
+
+| Command | What it does |
+|---|---|
+| `sudo systemctl status pi-nvr` | Current state |
+| `sudo systemctl restart pi-nvr` | Restart (after editing `.env`, etc.) |
+| `sudo systemctl stop pi-nvr` | Stop |
+| `sudo systemctl disable pi-nvr` | Don't auto-start on boot anymore |
+| `sudo journalctl -u pi-nvr -f` | Tail logs live |
+
+### Updating after a `git pull`
+
+```bash
+cd ~/pi-nvr
+git pull
+bash scripts/install_pi.sh   # idempotent — rebuilds frontend, runs new migrations
+```
+
+The script reuses your existing venv and `.env`, only installs system packages
+if missing, and re-runs Alembic to apply any new migrations.
+
+### Notes
+
+- **Pi 4 / Pi 5 only really.** Pi 3 works but the frontend build takes ~3 minutes
+  on first install. Pi Zero W is too underpowered (1GB RAM is the practical floor
+  for `npm run build`).
+- **First-frame latency is HLS-bound** (~5–10s). See "Streaming protocol".
+- **Storage:** recordings accumulate under `backend/recordings/`. Default
+  `RETENTION_DAYS=7` sweeps older files on startup. If you record many cameras
+  you'll want an external SSD on USB — the SD card will wear out eventually.
+
 ## Motivation
 This project was built to gain hands-on experience with backend systems, video streaming, and full-stack development.  
 An additional motivation was to deploy the system as part of a personal DIY home surveillance setup, allowing direct practical use and real-world testing of reliability, performance, and fault tolerance.

@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import Scope
 
 from app.database import SessionLocal
 from app.db_migrations import run_migrations
@@ -70,6 +73,27 @@ app.include_router(recordings.router)
 app.include_router(users.router)
 
 
-@app.get("/")
-def root():
-    return {"message": "Pi NVR Backend Running!"}
+# Serve the built frontend if it exists (production install). In dev the
+# user runs `npm run dev` on port 5173 and this block is a no-op.
+FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+
+class SPAStaticFiles(StaticFiles):
+    """StaticFiles that falls back to index.html for unknown paths (SPA routing)."""
+
+    async def get_response(self, path: str, scope: Scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code == 404:
+                return await super().get_response("index.html", scope)
+            raise
+
+
+if FRONTEND_DIST.exists():
+    app.mount("/", SPAStaticFiles(directory=FRONTEND_DIST, html=True), name="spa")
+else:
+
+    @app.get("/")
+    def root():
+        return {"message": "Pi NVR Backend Running!"}

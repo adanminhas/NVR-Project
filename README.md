@@ -125,48 +125,104 @@ cd backend
 
 ## Deploying to a Raspberry Pi
 
-One-shot installer for a fresh Raspberry Pi OS Lite (64-bit, Bookworm). Also
-works on any Debian/Ubuntu host.
+End-to-end setup guide, from a blank SD card to logging in. Targets Raspberry
+Pi OS Lite (64-bit, Bookworm) on a Pi 4 or Pi 5. Pi 3 works but the frontend
+build is slow; Pi Zero W doesn't have enough RAM.
+
+### What you'll need
+
+- Raspberry Pi 4 or 5
+- microSD card (16 GB+, Class 10 or better)
+- Power supply for the Pi
+- Computer to flash the SD card and SSH in
+- Wi-Fi credentials, or an Ethernet cable
+- (Optional) USB SSD if you plan to record many cameras
+
+### 1. Flash the SD card
+
+Install [Raspberry Pi Imager](https://www.raspberrypi.com/software/) on your
+computer and launch it.
+
+1. **Device:** select your Pi model.
+2. **Operating System:** Raspberry Pi OS (other) → **Raspberry Pi OS Lite (64-bit)**.
+3. **Storage:** select the SD card.
+4. Click **Next**, then **Edit Settings** in the "Apply OS customisation" dialog.
+   On the **General** tab:
+   - Set hostname (e.g. `pi-nvr` — this is the name you'll use to reach it)
+   - Set username and password
+   - Configure Wi-Fi (SSID + password)
+   - Set locale and timezone
+   On the **Services** tab:
+   - Enable **SSH** (password or public key, your call)
+5. **Save**, then write the image.
+
+When it finishes, eject the SD card and put it in the Pi.
+
+### 2. First boot
+
+Plug the Pi in. Wait ~60 seconds for it to boot and join Wi-Fi. The Pi will
+announce itself on the network via mDNS using the hostname you set.
+
+### 3. SSH in
+
+From your computer:
 
 ```bash
-# On the Pi, after SSH'ing in:
+ssh <your-username>@pi-nvr.local
+```
+
+(Replace `pi-nvr` with whatever hostname you set. If `.local` doesn't resolve —
+some routers block mDNS — find the Pi's IP in your router's admin page and use
+that instead.)
+
+### 4. Clone and install
+
+On the Pi:
+
+```bash
 sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/adanminhas/NVR-Project ~/pi-nvr
 cd ~/pi-nvr
 bash scripts/install_pi.sh
 ```
 
-The script:
+Takes ~5–10 minutes on a Pi 4. It will prompt for an admin username (default
+`admin`) and password (hidden as you type; press Enter to auto-generate one).
 
-- Installs system packages: `python3`, `python3-venv`, `ffmpeg`, Node 20,
-  `avahi-daemon` (so the Pi is reachable at `<hostname>.local`).
-- Sets up the backend venv and installs Python dependencies.
-- Writes `backend/.env` with a random `SECRET_KEY`, SQLite as the database (no
-  MySQL server needed), and a CORS regex that permits LAN IPs.
-- Asks for an admin username and password (defaults to `admin`, password
-  hidden). If you'd rather automate or pipe the script through `curl`, see
-  the non-interactive option below.
-- Runs Alembic migrations and creates the admin user on first start.
-- Builds the frontend with `npm run build`. The backend serves the built
-  files directly, so there's no separate frontend service in production.
-- Registers a systemd unit `pi-nvr.service` that auto-starts on boot, restarts
-  on failure, and logs to `journald`.
+The script handles everything: system packages (Python, Node 20, ffmpeg,
+avahi for mDNS), the backend venv, the SQLite database, Alembic migrations,
+the frontend build, and a systemd service that auto-starts on boot.
 
-When it finishes it prints the URL to open. If you entered an admin password
-during the prompt, it's not echoed back; if you let the script auto-generate
-one (or it was non-interactive), it's printed once. Either way, you can
-recover or change it later by editing `backend/.env` and restarting the
-service.
+When it finishes you'll see something like:
+
+```
+============================================================
+ Pi NVR is up and running.
+------------------------------------------------------------
+  http://pi-nvr.local:8000
+  http://192.168.1.61:8000
+
+  Admin login:   admin  (password set during install)
+============================================================
+```
+
+### 5. Log in
+
+Open the URL on any device on the same network — laptop, phone, tablet. Sign
+in with the username and password you chose during install.
+
+That's it. The service is now running and will auto-start every time the Pi
+boots. If you ever need to recover or change the admin password, edit
+`~/pi-nvr/backend/.env` and `sudo systemctl restart pi-nvr`.
 
 ### Non-interactive / scripted install
 
-Pass credentials as environment variables to skip the prompt:
+If you want to skip the prompts (cloud-init, Ansible, pre-baked image, etc.),
+pass credentials as environment variables:
 
 ```bash
 ADMIN_USERNAME=myuser ADMIN_PASSWORD=mypass bash scripts/install_pi.sh
 ```
-
-Useful for cloud-init, Ansible, or pre-baked SD images.
 
 ### Managing the service
 
@@ -178,16 +234,86 @@ Useful for cloud-init, Ansible, or pre-baked SD images.
 | `sudo systemctl disable pi-nvr` | Don't auto-start on boot anymore |
 | `sudo journalctl -u pi-nvr -f` | Tail logs live |
 
-### Updating after a `git pull`
+### Rolling out updates
+
+When you ship a new feature (a settings page, say), the cycle is:
+
+**On your dev machine:**
+
+```bash
+# edit code, run tests
+cd backend && ./venv/bin/python -m pytest
+cd ../frontend && npm test && npm run lint
+# happy with it?
+git add -A
+git commit -m "feat: new shiny thing"
+git push
+```
+
+**On the Pi:**
+
+```bash
+ssh <user>@pi-nvr.local
+cd ~/pi-nvr
+git pull
+bash scripts/install_pi.sh
+sudo systemctl restart pi-nvr      # in case install didn't already restart it
+```
+
+That's it. The install script is **idempotent** and handles each kind of
+change without needing options:
+
+| What changed | What the script does |
+|---|---|
+| Frontend (Vue, CSS) | `npm run build` regenerates `frontend/dist/`; backend serves the new files immediately |
+| Backend Python code | venv stays the same; systemd `restart` reloads the new code |
+| `requirements.txt` | `pip install -r requirements.txt` picks up the new deps (existing ones are skipped) |
+| `package.json` | `npm install` picks up new JS deps |
+| New Alembic migration in `backend/alembic/versions/` | `alembic upgrade head` runs the new revisions in order against your real SQLite database |
+| New keys in `.env.example` | **not auto-merged** — the script leaves your existing `.env` alone. Diff `backend/.env.example` against `backend/.env` and add missing keys manually, then restart |
+| System packages | `apt-get install -y` is a no-op when already present |
+
+**Verifying after an update:**
+
+```bash
+sudo systemctl status pi-nvr           # should say "active (running)"
+sudo journalctl -u pi-nvr -n 50 --no-pager   # last 50 log lines
+```
+
+If something goes wrong, the previous logs are still in `journald` —
+`journalctl -u pi-nvr --since "1 hour ago"` shows the full timeline.
+
+**Rolling back:** if a deploy breaks something, on the Pi:
 
 ```bash
 cd ~/pi-nvr
-git pull
-bash scripts/install_pi.sh   # idempotent — rebuilds frontend, runs new migrations
+git log --oneline -n 5     # find the commit hash you want to go back to
+git checkout <hash>
+bash scripts/install_pi.sh
+sudo systemctl restart pi-nvr
 ```
 
-The script reuses your existing venv and `.env`, only installs system packages
-if missing, and re-runs Alembic to apply any new migrations.
+Then push a fix from your dev machine and `git checkout main && git pull` to
+re-sync.
+
+**Skipping the full reinstall.** If you know only frontend or only backend
+changed, you can skip parts of the script and just do what's needed:
+
+```bash
+# Frontend-only change
+cd ~/pi-nvr/frontend && npm install && npm run build
+sudo systemctl restart pi-nvr
+
+# Backend-only Python change (no new deps, no new migration)
+sudo systemctl restart pi-nvr
+
+# New migration only
+cd ~/pi-nvr/backend && ./venv/bin/alembic upgrade head
+sudo systemctl restart pi-nvr
+```
+
+Running the full `install_pi.sh` is always safe and easier to remember,
+though.
 
 ### Notes
 

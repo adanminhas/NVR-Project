@@ -2,15 +2,32 @@ import axios from "axios";
 
 function resolveBaseURL() {
   const envURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
-  if (envURL) return envURL;
-  // Fallback: derive from the page origin so the app works on LAN/mobile
-  // when accessed via the host's IP — assumes the backend runs on port 8000
-  // of the same host.
-  if (typeof window !== "undefined" && window.location) {
+  const inBrowser = typeof window !== "undefined" && window.location;
+
+  if (inBrowser) {
     const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:8000`;
+    const derived = `${protocol}//${hostname}:8000`;
+    const localHosts = ["localhost", "127.0.0.1"];
+
+    // If an env URL is set but points at localhost while the page itself is
+    // being viewed from a non-localhost host (e.g. a phone hitting the PC's
+    // LAN IP), prefer the derived URL so the API call goes back to the same
+    // server that served the page.
+    if (envURL) {
+      try {
+        const envHost = new URL(envURL).hostname;
+        if (localHosts.includes(envHost) && !localHosts.includes(hostname)) {
+          return derived;
+        }
+      } catch {
+        // Unparseable env URL — fall back to using it raw.
+      }
+      return envURL;
+    }
+    return derived;
   }
-  return "http://localhost:8000";
+
+  return envURL || "http://localhost:8000";
 }
 
 const baseURL = resolveBaseURL();

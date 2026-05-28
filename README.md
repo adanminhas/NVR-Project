@@ -141,17 +141,32 @@ The script:
 - Installs system packages: `python3`, `python3-venv`, `ffmpeg`, Node 20,
   `avahi-daemon` (so the Pi is reachable at `<hostname>.local`).
 - Sets up the backend venv and installs Python dependencies.
-- Writes `backend/.env` with a random `SECRET_KEY`, a random `ADMIN_PASSWORD`,
-  SQLite as the database (no MySQL server needed), and a CORS regex that
-  permits LAN IPs.
+- Writes `backend/.env` with a random `SECRET_KEY`, SQLite as the database (no
+  MySQL server needed), and a CORS regex that permits LAN IPs.
+- Asks for an admin username and password (defaults to `admin`, password
+  hidden). If you'd rather automate or pipe the script through `curl`, see
+  the non-interactive option below.
 - Runs Alembic migrations and creates the admin user on first start.
 - Builds the frontend with `npm run build`. The backend serves the built
   files directly, so there's no separate frontend service in production.
 - Registers a systemd unit `pi-nvr.service` that auto-starts on boot, restarts
   on failure, and logs to `journald`.
 
-When it finishes it prints the URL to open and the generated admin password.
-Save the password — it's also in `backend/.env`.
+When it finishes it prints the URL to open. If you entered an admin password
+during the prompt, it's not echoed back; if you let the script auto-generate
+one (or it was non-interactive), it's printed once. Either way, you can
+recover or change it later by editing `backend/.env` and restarting the
+service.
+
+### Non-interactive / scripted install
+
+Pass credentials as environment variables to skip the prompt:
+
+```bash
+ADMIN_USERNAME=myuser ADMIN_PASSWORD=mypass bash scripts/install_pi.sh
+```
+
+Useful for cloud-init, Ansible, or pre-baked SD images.
 
 ### Managing the service
 

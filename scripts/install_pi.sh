@@ -60,9 +60,46 @@ fi
 ./venv/bin/python -m pip install -r requirements.txt --quiet
 
 if [ ! -f .env ]; then
-  log "Generating backend/.env with a random admin password"
+  log "Setting up backend/.env"
+
+  # Admin credentials: prompt if interactive, allow env-var override,
+  # fall back to a random password if neither is available (e.g. curl|bash).
+  : "${ADMIN_USERNAME:=}"
+  : "${ADMIN_PASSWORD:=}"
+
+  if [ -t 0 ] && [ -z "$ADMIN_USERNAME" ]; then
+    read -r -p "Admin username [admin]: " ADMIN_USERNAME
+  fi
+  ADMIN_USERNAME="${ADMIN_USERNAME:-admin}"
+
+  if [ -t 0 ] && [ -z "$ADMIN_PASSWORD" ]; then
+    while true; do
+      read -r -s -p "Admin password (min 4 chars, blank to auto-generate): " p1
+      echo
+      if [ -z "$p1" ]; then
+        break
+      fi
+      if [ "${#p1}" -lt 4 ]; then
+        echo "  Too short. At least 4 characters."
+        continue
+      fi
+      read -r -s -p "Confirm password: " p2
+      echo
+      if [ "$p1" = "$p2" ]; then
+        ADMIN_PASSWORD="$p1"
+        break
+      fi
+      echo "  Doesn't match. Try again."
+    done
+  fi
+
+  GENERATED_ADMIN_PASS=""
+  if [ -z "$ADMIN_PASSWORD" ]; then
+    ADMIN_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')"
+    GENERATED_ADMIN_PASS="$ADMIN_PASSWORD"
+  fi
+
   SECRET="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
-  ADMIN_PASS="$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')"
   cat > .env <<EOF
 ENVIRONMENT=production
 
@@ -83,10 +120,9 @@ SECRET_KEY=$SECRET
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=$ADMIN_PASS
+ADMIN_USERNAME=$ADMIN_USERNAME
+ADMIN_PASSWORD=$ADMIN_PASSWORD
 EOF
-  GENERATED_ADMIN_PASS="$ADMIN_PASS"
 else
   log "Reusing existing backend/.env"
   GENERATED_ADMIN_PASS=""
@@ -146,14 +182,15 @@ echo " Pi NVR is up and running."
 echo "------------------------------------------------------------"
 echo "  http://${HOST_LOCAL}:${PORT}"
 echo "  http://${HOST_IP}:${PORT}"
-if [ -n "$GENERATED_ADMIN_PASS" ]; then
+if [ -n "${GENERATED_ADMIN_PASS:-}" ]; then
   echo ""
-  echo "  Admin login:   admin"
-  echo "  Password:      $GENERATED_ADMIN_PASS"
+  echo "  Admin login:   ${ADMIN_USERNAME:-admin}"
+  echo "  Password:      $GENERATED_ADMIN_PASS    (auto-generated)"
   echo ""
-  echo "  Stored in:     $PROJECT_DIR/backend/.env"
-  echo "  Change it later by editing that file and restarting:"
-  echo "    sudo systemctl restart ${SERVICE_NAME}.service"
+  echo "  Save it. Also stored in $PROJECT_DIR/backend/.env"
+elif [ -n "${ADMIN_USERNAME:-}" ]; then
+  echo ""
+  echo "  Admin login:   $ADMIN_USERNAME  (password set during install)"
 fi
 echo "------------------------------------------------------------"
 echo "  Logs:          sudo journalctl -u ${SERVICE_NAME}.service -f"

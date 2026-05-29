@@ -173,15 +173,17 @@ if ! systemctl is-active --quiet "${SERVICE_NAME}.service"; then
 fi
 
 # -------- 5. Done -------------------------------------------------------------
-HOST_LOCAL="$(hostname).local"
+HOST_NAME="$(hostname)"
+HOST_LOCAL="${HOST_NAME}.local"
 HOST_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || echo unknown)"
 
 echo ""
 echo "============================================================"
 echo " Pi NVR is up and running."
 echo "------------------------------------------------------------"
-echo "  http://${HOST_LOCAL}:${PORT}"
-echo "  http://${HOST_IP}:${PORT}"
+echo "  http://${HOST_NAME}:${PORT}        (if your router resolves bare hostnames)"
+echo "  http://${HOST_LOCAL}:${PORT}   (if your devices speak mDNS)"
+echo "  http://${HOST_IP}:${PORT}    (always works — use this if the others don't)"
 if [ -n "${GENERATED_ADMIN_PASS:-}" ]; then
   echo ""
   echo "  Admin login:   ${ADMIN_USERNAME:-admin}"

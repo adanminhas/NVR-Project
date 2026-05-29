@@ -82,17 +82,22 @@ The installer does everything: installs system packages, sets up Python,
 builds the frontend, configures SQLite, runs migrations, creates the admin
 user, and registers a systemd service that auto-starts on every boot.
 
-When it finishes you'll see:
+When it finishes you'll see something like:
 
 ```
 ============================================================
  Pi NVR is up and running.
 ------------------------------------------------------------
-  http://pi-nvr:8000
-  http://192.168.1.61:8000
+  http://pi-nvr:8000         (if your router resolves bare hostnames)
+  http://pi-nvr.local:8000   (if your devices speak mDNS)
+  http://192.168.1.61:8000   (always works — use this if the others don't)
   Admin login:   admin  (password set during install)
 ============================================================
 ```
+
+Try the bare hostname first; fall back to the IP if it doesn't resolve. The
+`.local` form depends on mDNS being supported end-to-end, which is patchy on
+some Windows boxes and routers — perfectly normal if it doesn't work for you.
 
 ### 5. Log in
 

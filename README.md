@@ -44,7 +44,7 @@ computer, then:
 2. **Operating System** — Raspberry Pi OS (other) → **Raspberry Pi OS Lite (64-bit)**.
 3. **Storage** — select your SD card.
 4. Click **Next**, then **Edit Settings**. On the **General** tab set hostname
-   (e.g. `pi-nvr` — you'll reach the Pi at `pi-nvr.local`), username, password,
+   (e.g. `pi-nvr` — you'll reach the Pi at that name), username, password,
    Wi-Fi, locale. On the **Services** tab enable **SSH**.
 5. **Save** and write the image.
 
@@ -59,11 +59,12 @@ Plug the Pi in. Wait ~60 seconds for it to boot and join Wi-Fi.
 From your computer:
 
 ```bash
-ssh <your-username>@pi-nvr.local
+ssh <your-username>@pi-nvr
 ```
 
-(If `.local` doesn't resolve — some routers block mDNS — find the Pi's IP in
-your router's admin page and use that instead.)
+(If the bare hostname doesn't resolve, try `pi-nvr.local` — that uses mDNS
+via Avahi. If neither resolves, find the Pi's IP in your router's admin page
+and use that instead.)
 
 ### 4. Run the installer
 
@@ -87,7 +88,7 @@ When it finishes you'll see:
 ============================================================
  Pi NVR is up and running.
 ------------------------------------------------------------
-  http://pi-nvr.local:8000
+  http://pi-nvr:8000
   http://192.168.1.61:8000
   Admin login:   admin  (password set during install)
 ============================================================
@@ -98,9 +99,36 @@ When it finishes you'll see:
 Open the URL on any device on the same network — laptop, phone, tablet. Sign
 in with the username and password you set.
 
-That's it. The service auto-starts every time the Pi boots. If you need to
-recover or change the admin password later, edit `~/pi-nvr/backend/.env` and
-`sudo systemctl restart pi-nvr`.
+If you need to recover or change the admin password later, edit
+`~/pi-nvr/backend/.env` and `sudo systemctl restart pi-nvr`.
+
+### Auto-start on boot
+
+The installer registers a systemd unit and enables it, so the NVR comes back
+up automatically every time the Pi powers on — no SSH, no manual steps.
+
+Specifically, the unit:
+
+- Is `enabled` for `multi-user.target`, so systemd starts it on every boot
+- Waits for the network to actually come up (`network-online.target`) before
+  launching uvicorn, so it doesn't fail trying to bind before Wi-Fi connects
+- Restarts itself 5 seconds after any crash (`Restart=on-failure`)
+- Logs to `journald` so the full history survives reboots
+
+Verify it's enabled:
+
+```bash
+systemctl is-enabled pi-nvr   # should print "enabled"
+```
+
+Test it end-to-end by rebooting the Pi:
+
+```bash
+sudo reboot
+```
+
+Wait ~30 seconds, then open `http://pi-nvr:8000` from your laptop. It should
+be back up with no intervention.
 
 ## Managing the service
 
@@ -117,7 +145,7 @@ recover or change the admin password later, edit `~/pi-nvr/backend/.env` and
 Whenever new features ship to the repo, on the Pi:
 
 ```bash
-ssh <user>@pi-nvr.local
+ssh <user>@pi-nvr
 cd ~/pi-nvr
 git pull
 bash scripts/install_pi.sh

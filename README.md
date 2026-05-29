@@ -135,6 +135,40 @@ sudo reboot
 Wait ~30 seconds, then open `http://pi-nvr:8000` from your laptop. It should
 be back up with no intervention.
 
+## Forgotten the URL?
+
+SSH into the Pi and run:
+
+```bash
+bash ~/pi-nvr/scripts/url.sh
+```
+
+Prints all three URL forms (bare hostname, `.local`, IP) for the current
+network, so you can pick whichever resolves.
+
+### Making the IP stable
+
+The hostname (`pi-nvr` / `pi-nvr.local`) is stable across reboots — you set
+it once during Imager setup and it doesn't change. The IP, on the other
+hand, is assigned by your router via DHCP and can change after a long power
+outage or router reboot.
+
+If you want the IP to be the same every time, set a **DHCP reservation** in
+your router's admin page. The exact menu varies by router, but the idea is
+the same everywhere:
+
+1. Find the Pi's MAC address: `cat /sys/class/net/wlan0/address` (Wi-Fi) or
+   `cat /sys/class/net/eth0/address` (Ethernet)
+2. In your router's admin UI, look for something like "DHCP Reservation",
+   "Static Lease", or "Address Reservation"
+3. Add an entry binding that MAC address to a chosen IP (e.g. `192.168.1.72`)
+4. Reboot the Pi — it'll come back up at that fixed IP forever
+
+This is more reliable than configuring a static IP on the Pi itself (which
+can collide with the DHCP pool). It's also the cleanest fix when mDNS
+doesn't work on your network — you bookmark `http://192.168.1.72:8000` and
+it just always works.
+
 ## Managing the service
 
 | Command | What it does |
